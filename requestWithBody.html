@@ -1,0 +1,171 @@
+<!--
+  Copyright (c) 2011 Google Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+
+  To run this sample, replace "apiKey" and "clientId" with your own values.
+  They can be found at https://code.google.com/apis/console/?api=calendar under API Access.
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <title>JS Client with Request Body Sample</title>
+    <style>
+      #info {
+        border: 1px solid black;
+        padding: 0.25em;
+        margin: 0.5em 0;
+        text-align: center;
+      }
+    </style>
+    <script>
+      // Enter the API key from the Google Develoepr Console - to handle any unauthenticated
+      // requests in the code.
+      // The provided key works for this sample only when run from
+      // https://google-api-javascript-client.googlecode.com/hg/samples/rpcRequestBody.html
+      // To use in your own application, replace this API key with your own.
+      var apiKey = 'AIzaSyAXfCxq9HJWIQ0dbQqv-Any0aNQwuLCsz8';
+
+      // Enter a client ID for a web application from the Google Developer Console.
+      // The provided clientId will only work if the sample is run directly from
+      // https://google-api-javascript-client.googlecode.com/hg/samples/rpcRequestBody.html
+      // In your Developer Console project, add a JavaScript origin that corresponds to the domain
+      // where you will be running the script.
+      var clientId = '787297487118-1i2vh9u0e87d4btljri8uikc18la8os7.apps.googleusercontent.com';
+
+      var scopes = 'https://www.googleapis.com/auth/photoslibrary.readonly';
+
+      // The Calendar entry to create
+      var resource = {"filters":
+           {"dateFilter":
+             {"dates":[
+                        {"day":27,
+                         "month":2,
+                         "year":2021
+                        }
+                      ]
+              }
+           }
+        };
+
+      function changeDate(value){
+         var date = new Date(value);
+         var day = date.getDate();
+         var month = date.getMonth() + 1;
+         var year = date.getFullYear();
+         console.log("day" + day);
+         console.log("month"  + month);
+         console.log("year" + year);
+         resource.filters.dateFilter.dates[0].day = day;
+         resource.filters.dateFilter.dates[0].month = month;
+         resource.filters.dateFilter.dates[0].year = year;
+         console.log(resource.filters.dateFilter.dates[0]);
+
+      } 
+      function handleClientLoad() {
+        gapi.load('client', initClient);
+      }
+
+      function initClient() {
+        gapi.client.init({
+          apiKey: apiKey,
+          clientId: clientId,
+          scope: scopes
+        }).then();
+      }
+
+      function signIn() {
+        gapi.auth2.getAuthInstance().signIn().then((response) =>{
+             loadPhotos(response.uc.access_token);
+        });
+      }
+
+      function loadPhotos(token){
+         console.log(token);
+        
+      }
+      function makeRequest() {
+        gapi.client.request({
+          'path': 'https://content-photoslibrary.googleapis.com/v1/mediaItems:search?alt=json&key='+apiKey,
+          'method': 'POST',
+          'body': resource
+        }).then(function(resp) {
+          displayPhotos(resp);
+        });
+      }
+
+      function displayPhotos(resp){
+         var div = document.getElementById("info");
+         while (div.firstChild) {
+             div.removeChild(div.lastChild);
+         }
+         var items = resp.result.mediaItems;
+         console.log(items);
+         for (var x=0; x<items.length;  x++) {
+               var url = items[x].baseUrl;
+               var productUrl = items[x].productUrl;
+               console.log(url);
+               var mediaType = items[x].mimeType;
+               var imgElement = createImageElement(url, productUrl);
+               div.appendChild(imgElement);
+               
+         }
+      }
+
+      function createImageElement(url, productUrl){
+         var y = document.createElement("A");
+         y.setAttribute("href", productUrl);
+         var x = document.createElement("IMG");
+         x.setAttribute("src", url);
+  	 x.setAttribute("width", "304");
+         x.setAttribute("height", "228");
+         y.appendChild(x);
+         return y;
+      }
+      function createVideoElement(url){
+         var x = document.createElement("VIDEO");
+         x.setAttribute("src", url);
+         x.setAttribute("width", "304");
+         x.setAttribute("height", "228");
+         return x;
+      }
+
+      function writeResponse(response) {
+        console.log(response);
+        var creator = response.creator.email;
+        var calendarEntry = response.htmlLink;
+        var infoDiv = document.getElementById('info');
+        var infoMsg = document.createElement('P');
+        infoMsg.appendChild(document.createTextNode('Calendar entry ' +
+            'successfully created by ' + creator));
+        infoDiv.appendChild(infoMsg);
+        var entryLink = document.createElement('A');
+        entryLink.href = calendarEntry;
+        entryLink.appendChild(
+            document.createTextNode('View the Calendar entry'));
+        infoDiv.appendChild(entryLink);
+      }
+    </script>
+    <script async defer src="https://apis.google.com/js/api.js"
+      onload="this.onload=function(){};handleClientLoad();"
+      onreadystatechange="if (this.readyState === 'complete') this.onload();">
+    </script>
+  </head>
+  <body>
+    <input type="date" onChange="changeDate(this.value)"/>
+    <button id="rpc" onclick="signIn();">Sign in</button>
+    <button id="rest" onclick="makeRequest();">Make Request</button>
+    <div id="info" class="container"></div>
+  </body>
+</html>
