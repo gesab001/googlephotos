@@ -97,7 +97,7 @@
       }
       function makeRequest() {
         gapi.client.request({
-          'path': 'https://content-photoslibrary.googleapis.com/v1/mediaItems:search?alt=json&key='+apiKey,
+          'path': 'https://content-photoslibrary.googleapis.com/v1/mediaItems:search?alt=json&key=',
           'method': 'POST',
           'body': resource
         }).then(function(resp) {
